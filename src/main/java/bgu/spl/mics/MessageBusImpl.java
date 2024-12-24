@@ -9,14 +9,14 @@ import java.util.concurrent.*;
  * All other methods and members you add the class must be private.
  */
 public class MessageBusImpl implements MessageBus {
-	private static MessageBusImpl instance = null; // Singleton's single instance
 
 	private final Map<MicroService, BlockingQueue<Message>> serviceQueues;
 	private final Map<Class<? extends Message>, List<MicroService>> subscribers;
 	private final Map<Event<?>, Future<?>> eventFutures;
+	// Tracks the current index of the handling microservice for each event type
 	private final Map<Class<? extends Event<?>>, Integer> roundRobinIndices;
 
-	// Private constructor for singleton
+	// Private constructor to prevent instantiation of singleton
 	private MessageBusImpl() {
 		serviceQueues = new ConcurrentHashMap<>();
 		subscribers = new ConcurrentHashMap<>();
@@ -24,13 +24,14 @@ public class MessageBusImpl implements MessageBus {
 		roundRobinIndices = new ConcurrentHashMap<>();
 	}
 
-	// Singleton instance accessor (the one public method addition)
-	// TODO: Explain why synchronized
-	public static synchronized MessageBusImpl getInstance() {
-		if (instance == null) {
-			instance = new MessageBusImpl();
-		}
-		return instance;
+	// Static inner class to hold the singleton instance (as detailed in PS9)
+	private static class SingletonHolder {
+		private static final MessageBusImpl INSTANCE = new MessageBusImpl();
+	}
+
+	// Public method to provide access to the singleton instance
+	public static MessageBusImpl getInstance() {
+		return SingletonHolder.INSTANCE;
 	}
 
 	@Override
@@ -48,7 +49,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	// TODO: Explain why synchronized
+	// Synchronized to ensure subscribers map and its associated lists are updated consistently
 	public synchronized  <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
 		// In case this event type doesn't have subscribers yet, initialize it
 		subscribers.putIfAbsent(type, new ArrayList<>());
@@ -57,7 +58,6 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	// TODO: Explain why synchronized
 	public synchronized void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// Same as subscribeEvent, this time the argument is extending broadcast
 		subscribers.putIfAbsent(type, new ArrayList<>());
@@ -65,39 +65,43 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	// TODO: Explain why synchronized
+	// Synchronized to ensure atomicity in selecting the target MicroService, updating indices, and queuing the event
 	public synchronized <T> Future<T> sendEvent(Event<T> e) {
-		// Get the subscribers to this specific event. If none then it's an empty list
+		// Get the list of MicroServices subscribed to the type of event e. If none then it's an empty list
 		List<MicroService> eventSubscribers = subscribers.getOrDefault(e.getClass(), new ArrayList<>());
-		// If no subscribers then there's no event to return as result
+		// If no subscribers then there are no handlers available to resolve this event
 		if (eventSubscribers.isEmpty()) {
 			return null;
 		}
 
-		// Round-robin dispatch TODO: understand this
+		// Round-robin pattern to evenly distribute events among MicroServices subscribed to a specific event type:
+		// Fetch the current index for this event type. If no index exists, start with 0
 		int index = roundRobinIndices.getOrDefault(e.getClass(), 0);
+		// Retrieve the subscribed microservice at the current index and then increment index
 		MicroService target = eventSubscribers.get(index);
-		roundRobinIndices.put(e.getClass(), (index + 1) % eventSubscribers.size());
+		roundRobinIndices.put((Class<? extends Event<?>>) e.getClass(), (index + 1) % eventSubscribers.size());
 
+		// Create a new Future object for the result of the processed event and put in the map
 		Future<T> future = new Future<>();
 		eventFutures.put(e, future);
-		serviceQueues.get(target).add(e); // TODO: Decide if offer() is better than add. It returns a boolean addition result indicator
+		// Enqueues the event for the MicroService so it can process it when it reaches this message
+		serviceQueues.get(target).add(e);
 		return future;
 	}
 
 	@Override
-	// TODO: Explain why synchronized
+	// Synchronized to ensure subscribers map is not modified while the method is iterating on it
 	public synchronized void sendBroadcast(Broadcast b) {
 		// Get the subscribers to this specific event. If none then it's an empty list
 		List<MicroService> broadcastSubscribers = subscribers.getOrDefault(b.getClass(), new ArrayList<>());
 		// Add the broadcast to the queue of each subscribed microservice
 		for (MicroService m : broadcastSubscribers) {
-			serviceQueues.get(m).add(b); // TODO: Decide if offer() is better than add. It returns a boolean addition result indicator
+			serviceQueues.get(m).add(b);
 		}
 	}
 
 	@Override
-	// TODO: Explain why synchronized
+	// Synchronized to ensure only one thread at a time can resolve a specific future
 	public synchronized <T> void complete(Event<T> e, T result) {
 		// Get a future object of the wanted event type
 		Future<T> future = (Future<T>) eventFutures.get(e);
@@ -109,12 +113,14 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	// TODO: understand this method
+	// No need to synchronize because LinkedBlockingQueue is thread safe and take will block if needed
+	// each MicroService has its own BlockingQueue, ensuring isolated and thread-safe access to its messages
 	public Message awaitMessage(MicroService m) throws InterruptedException {
+		// Fetch the message queue of the given MicroService from the serviceQueues map and validate not null
 		BlockingQueue<Message> queue = serviceQueues.get(m);
 		if (queue == null) {
 			throw new IllegalStateException("MicroService is not registered.");
 		}
-		return queue.take(); // Blocks until a message is available
+		return queue.take(); // blocks the calling thread until a message is available
 	}
 }
