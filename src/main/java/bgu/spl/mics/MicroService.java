@@ -1,7 +1,10 @@
 package bgu.spl.mics;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * The MicroService is an abstract class that any micro-service in the system
+ * The MicroService is an abstract class that any microservice in the system
  * must extend. The abstract MicroService class is responsible to get and
  * manipulate the singleton {@link MessageBus} instance.
  * <p>
@@ -14,17 +17,20 @@ package bgu.spl.mics;
  * message-queue (see {@link MessageBus#register(bgu.spl.mics.MicroService)}
  * method). The abstract MicroService stores this callback together with the
  * type of the message is related to.
- * 
+ *
  * Only private fields and methods may be added to this class.
  * <p>
  */
 public abstract class MicroService implements Runnable {
 
-    private boolean terminated = false;
+    private boolean terminated = false; // Indicator whether the microservice should stop its message loop
     private final String name;
+    private final MessageBus messageBus = MessageBusImpl.getInstance();
+    // Stores callbacks associated with each message type
+    private final Map<Class<? extends Message>, Callback<?>> callbacks = new HashMap<>();
 
     /**
-     * @param name the micro-service name (used mainly for debugging purposes -
+     * @param name the microservice name (used mainly for debugging purposes -
      *             does not have to be unique)
      */
     public MicroService(String name) {
@@ -49,11 +55,12 @@ public abstract class MicroService implements Runnable {
      * @param type     The {@link Class} representing the type of event to
      *                 subscribe to.
      * @param callback The callback that should be called when messages of type
-     *                 {@code type} are taken from this micro-service message
+     *                 {@code type} are taken from this microservice message
      *                 queue.
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
-        //TODO: implement this.
+        callbacks.put(type, callback);
+        messageBus.subscribeEvent(type, this);
     }
 
     /**
@@ -77,7 +84,8 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-        //TODO: implement this.
+        callbacks.put(type, callback);
+        messageBus.subscribeBroadcast(type, this);
     }
 
     /**
@@ -89,12 +97,11 @@ public abstract class MicroService implements Runnable {
      *                  {@code e}
      * @param e         The event to send
      * @return  		{@link Future<T>} object that may be resolved later by a different
-     *         			micro-service processing this event.
-     * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
+     *         			microservice processing this event.
+     * 	       			null in case no microservice has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
-        //TODO: implement this.
-        return null; //TODO: delete this line :)
+        return messageBus.sendEvent(e);
     }
 
     /**
@@ -104,7 +111,7 @@ public abstract class MicroService implements Runnable {
      * @param b The broadcast message to send
      */
     protected final void sendBroadcast(Broadcast b) {
-        //TODO: implement this.
+        messageBus.sendBroadcast(b);
     }
 
     /**
@@ -118,7 +125,7 @@ public abstract class MicroService implements Runnable {
      *               {@code e}.
      */
     protected final <T> void complete(Event<T> e, T result) {
-        //TODO: implement this.
+        messageBus.complete(e, result);
     }
 
     /**
@@ -143,15 +150,27 @@ public abstract class MicroService implements Runnable {
     }
 
     /**
-     * The entry point of the micro-service. TODO: you must complete this code
+     * The entry point of the microservice.
      * otherwise you will end up in an infinite loop.
      */
     @Override
     public final void run() {
+        messageBus.register(this);
         initialize();
-        while (!terminated) {
-            System.out.println("NOT IMPLEMENTED!!!"); //TODO: you should delete this line :)
+        try {
+            while (!terminated) {
+                Message message = messageBus.awaitMessage(this);
+                @SuppressWarnings("unchecked")
+                        // Call the appropriate callback for each received message
+                Callback<Message> callback = (Callback<Message>) callbacks.get(message.getClass());
+                if (callback != null) {
+                    callback.call(message);
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            messageBus.unregister(this);
         }
     }
-
 }
