@@ -12,10 +12,6 @@ import bgu.spl.mics.application.objects.FusionSlam;
  */
 public class FusionSlamService extends MicroService {
 
-    public FusionSlamService(String name) {
-        super(name);
-    }
-
     /**
      * Constructor for FusionSlamService.
      *

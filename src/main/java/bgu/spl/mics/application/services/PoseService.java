@@ -9,10 +9,6 @@ import bgu.spl.mics.application.objects.GPSIMU;
  */
 public class PoseService extends MicroService {
 
-    public PoseService(String name) {
-        super(name);
-    }
-
     /**
      * Constructor for PoseService.
      *

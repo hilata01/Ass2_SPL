@@ -12,10 +12,6 @@ import bgu.spl.mics.application.objects.Camera;
  */
 public class CameraService extends MicroService {
 
-    public CameraService(String name) {
-        super(name);
-    }
-
     /**
      * Constructor for CameraService.
      *

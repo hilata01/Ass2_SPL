@@ -13,10 +13,6 @@ import bgu.spl.mics.application.objects.LiDarWorkerTracker;
  */
 public class LiDarService extends MicroService {
 
-    public LiDarService(String name) {
-        super(name);
-    }
-
     /**
      * Constructor for LiDarService.
      *
