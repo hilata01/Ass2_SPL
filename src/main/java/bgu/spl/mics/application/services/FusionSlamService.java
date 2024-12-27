@@ -11,6 +11,11 @@ import bgu.spl.mics.application.objects.FusionSlam;
  * transforming and updating the map with new landmarks.
  */
 public class FusionSlamService extends MicroService {
+
+    public FusionSlamService(String name) {
+        super(name);
+    }
+
     /**
      * Constructor for FusionSlamService.
      *
