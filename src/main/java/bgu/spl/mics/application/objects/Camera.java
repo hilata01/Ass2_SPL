@@ -1,6 +1,5 @@
 package bgu.spl.mics.application.objects;
 
-import bgu.spl.mics.application.objects.STATUS;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,40 +17,41 @@ public class Camera {
     /**
      * Constructor for Camera.
      *
-     * @param id          The unique ID of the camera.
-     * @param frequency   The time interval (in ticks) at which the camera operates.
+     * @param id                The unique ID of the camera.
+     * @param frequency         The time interval (in ticks) at which the camera operates.
+     * @param detectedObjectsList The list of stamped detected objects associated with this camera.
      */
-    public Camera(int id, int frequency) {
+    public Camera(int id, int frequency, List<StampedDetectedObjects> detectedObjectsList) {
         this.id = id;
         this.frequency = frequency;
         this.status = STATUS.UP;
-        this.detectedObjectsList = new ArrayList<>();
+        this.detectedObjectsList = detectedObjectsList;
     }
 
     /**
-     * Detects objects based on the current state of the camera.
+     * Detects objects at the specified tick.
      *
-     * @return A list of DetectedObject instances if the camera is operational; an empty list otherwise.
+     * @param tick The current tick.
+     * @return A StampedDetectedObjects instance if objects are detected at this tick; otherwise, an empty instance.
      */
-    public List<DetectedObject> detectObjects() {
+    public StampedDetectedObjects detectObjects(long tick) {
         if (status != STATUS.UP) {
-            return new ArrayList<>();
+            return new StampedDetectedObjects(tick, new ArrayList<>());
         }
 
-        // Simulate detection logic (populate detectedObjectsList with dummy data for now)
-        List<DetectedObject> detectedObjects = new ArrayList<>();
-        /*
-        detectedObjects.add(new DetectedObject("Object1", "Description1"));
-        detectedObjects.add(new DetectedObject("Object2", "Description2"));
+        // Find the objects detected at the current tick
+        for (StampedDetectedObjects stampedDetectedObjects : detectedObjectsList) {
+            if (stampedDetectedObjects.getTimestamp() == tick) {
+                return stampedDetectedObjects;
+            }
+        }
 
-        // Add timestamped detections
-        detectedObjectsList.add(new StampedDetectedObjects(System.currentTimeMillis(), detectedObjects));
-        */
-        return detectedObjects;
+        // If no objects are detected at the current tick, return an empty instance
+        return new StampedDetectedObjects(tick, new ArrayList<>());
     }
 
     /**
-     * Gets the ID of the camera.
+     * Gets the unique ID of the camera.
      *
      * @return The camera's ID.
      */
@@ -60,7 +60,7 @@ public class Camera {
     }
 
     /**
-     * Gets the frequency of the camera.
+     * Gets the frequency at which the camera operates.
      *
      * @return The camera's frequency.
      */
@@ -71,7 +71,7 @@ public class Camera {
     /**
      * Gets the operational status of the camera.
      *
-     * @return The camera's current STATUS.
+     * @return The camera's status.
      */
     public STATUS getStatus() {
         return status;
@@ -80,18 +80,19 @@ public class Camera {
     /**
      * Sets the operational status of the camera.
      *
-     * @param status The new status for the camera.
+     * @param status The new status of the camera.
      */
     public void setStatus(STATUS status) {
         this.status = status;
     }
 
-    /**
-     * Gets the list of all detected objects with timestamps.
-     *
-     * @return A list of StampedDetectedObjects.
-     */
-    public List<StampedDetectedObjects> getDetectedObjectsList() {
-        return detectedObjectsList;
+    @Override
+    public String toString() {
+        return "Camera{" +
+                "id=" + id +
+                ", frequency=" + frequency +
+                ", status=" + status +
+                ", detectedObjectsList=" + detectedObjectsList +
+                '}';
     }
 }

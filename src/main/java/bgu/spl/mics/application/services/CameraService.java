@@ -1,21 +1,18 @@
 package bgu.spl.mics.application.services;
 
-import bgu.spl.mics.Callback;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.CrashedBroadcast;
 import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
-import bgu.spl.mics.application.objects.*;
-
-import java.util.List;
+import bgu.spl.mics.application.objects.Camera;
+import bgu.spl.mics.application.objects.STATUS;
+import bgu.spl.mics.application.objects.StatisticalFolder;
+import bgu.spl.mics.application.objects.StampedDetectedObjects;
 
 /**
  * CameraService is responsible for processing data from the camera and
  * sending DetectObjectsEvents to LiDAR workers.
- *
- * This service interacts with the Camera object to detect objects and updates
- * the system's StatisticalFolder upon sending its observations.
  */
 public class CameraService extends MicroService {
 
@@ -36,62 +33,37 @@ public class CameraService extends MicroService {
 
     /**
      * Initializes the CameraService.
-     * Registers the service to handle TickBroadcasts and sets up callbacks for sending
-     * DetectObjectsEvents.
+     * Registers the service to handle TickBroadcasts and TerminatedBroadcasts.
      */
     @Override
     protected void initialize() {
-        // Subscribe to TickBroadcast to trigger actions at every tick
-        subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
-            @Override
-            public void call(TickBroadcast tick) {
-                processTick(tick.getTick());
+        // Subscribes to TickBroadcast to perform periodic operations.
+        // Each TickBroadcast acts as a heartbeat, allowing the service to check
+        // if it is time to detect objects based on the camera's frequency.
+        subscribeBroadcast(TickBroadcast.class, tick -> {
+            long currentTick = tick.getTick();
+
+            // The frequency condition ensures that detection only happens at specified intervals.
+            // The status condition ensures that the camera is operational before detecting objects.
+            if (currentTick % camera.getFrequency() == 0 && camera.getStatus() == STATUS.UP) {
+                StampedDetectedObjects stampedDetectedObjects = camera.detectObjects(currentTick);
+
+                if (!stampedDetectedObjects.getDetectedObjects().isEmpty()) {
+                    // Sends a DetectObjectsEvent to notify other services (e.g., LiDAR) of the detected objects.
+                    // This allows downstream services to process the detected objects further, such as tracking
+                    // or updating the map.
+                    sendEvent(new DetectObjectsEvent(stampedDetectedObjects));
+
+                    // Updates statistics to keep track of the number of detected objects.
+                    stats.incrementDetectedObjects(stampedDetectedObjects.getDetectedObjects().size());
+                }
             }
         });
 
-        // Subscribe to TerminatedBroadcast for graceful termination
-        subscribeBroadcast(TerminatedBroadcast.class, terminated -> {
-            // Cleanup, finalize, etc.
-            terminate();
-        });
+        subscribeBroadcast(TerminatedBroadcast.class, terminated -> terminate());
 
-        // Subscribe to CrashedBroadcast
-        subscribeBroadcast(CrashedBroadcast.class, crashed -> {
-            // Possibly log or update stats about the crash
-            terminate();
-        });
+        subscribeBroadcast(CrashedBroadcast.class, crashed -> terminate());
 
-        // Log initialization
-        System.out.println(getName() + " initialized and waiting for ticks.");
-    }
-
-    /**
-     * Processes the tick to check if the camera should send a DetectObjectsEvent.
-     *
-     * @param tick The current tick.
-     */
-    private void processTick(long tick) {
-        // Check if the camera is operational and due to send data
-        if (camera.getStatus() == STATUS.UP && tick % camera.getFrequency() == 0) {
-            List<DetectedObject> detectedObjects = camera.detectObjects();
-
-            if (!detectedObjects.isEmpty()) {
-                // Create StampedDetectedObjects
-                StampedDetectedObjects stampedDetectedObjects =
-                        new StampedDetectedObjects(tick, detectedObjects);
-
-                // Send a DetectObjectsEvent to LiDAR workers
-                DetectObjectsEvent<StampedDetectedObjects> event =
-                        new DetectObjectsEvent<>(stampedDetectedObjects);
-
-                sendEvent(event);
-
-                // Update statistics
-                stats.incrementDetectedObjects(detectedObjects.size());
-
-                // Log detection
-                System.out.println(getName() + " sent DetectObjectsEvent at tick " + tick);
-            }
-        }
+        System.out.println(getName() + " initialized.");
     }
 }
