@@ -7,7 +7,7 @@ import java.util.List;
  * Represents a LiDAR tracker worker responsible for tracking objects and managing LiDAR data.
  * Tracks objects and sends observations to the Fusion-SLAM service.
  */
-public class LiDarTrackerWorker {
+public class LiDarWorkerTracker {
 
     private final int id;
     private final int frequency;
@@ -20,7 +20,7 @@ public class LiDarTrackerWorker {
      * @param id        The unique ID of the LiDAR tracker worker.
      * @param frequency The frequency (in ticks) at which the worker sends new events.
      */
-    public LiDarTrackerWorker(int id, int frequency) {
+    public LiDarWorkerTracker(int id, int frequency) {
         this.id = id;
         this.frequency = frequency;
         this.status = STATUS.UP;

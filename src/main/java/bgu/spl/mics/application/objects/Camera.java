@@ -8,7 +8,6 @@ import java.util.List;
  * Responsible for detecting objects in the environment.
  */
 public class Camera {
-
     private final int id;
     private final int frequency;
     private STATUS status;
