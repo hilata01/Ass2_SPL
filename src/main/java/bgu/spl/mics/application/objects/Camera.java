@@ -40,13 +40,13 @@ public class Camera {
 
         // Simulate detection logic (populate detectedObjectsList with dummy data for now)
         List<DetectedObject> detectedObjects = new ArrayList<>();
-
+        /*
         detectedObjects.add(new DetectedObject("Object1", "Description1"));
         detectedObjects.add(new DetectedObject("Object2", "Description2"));
 
         // Add timestamped detections
         detectedObjectsList.add(new StampedDetectedObjects(System.currentTimeMillis(), detectedObjects));
-
+        */
         return detectedObjects;
     }
 

@@ -4,106 +4,101 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a LiDAR worker that processes detected objects and converts them into tracked objects.
+ * Represents a LiDAR tracker worker responsible for tracking objects and managing LiDAR data.
+ * Tracks objects and sends observations to the Fusion-SLAM service.
  */
-public class LiDarWorkerTracker {
+public class LiDarTrackerWorker {
 
     private final int id;
     private final int frequency;
     private STATUS status;
+    private List<TrackedObject> lastTrackedObjects;
 
     /**
-     * Constructor for LiDarWorkerTracker.
+     * Constructor for LiDarTrackerWorker.
      *
-     * @param id        The unique ID of the LiDAR worker.
-     * @param frequency The time interval (in ticks) at which the LiDAR processes data.
+     * @param id        The unique ID of the LiDAR tracker worker.
+     * @param frequency The frequency (in ticks) at which the worker sends new events.
      */
-    public LiDarWorkerTracker(int id, int frequency) {
+    public LiDarTrackerWorker(int id, int frequency) {
         this.id = id;
         this.frequency = frequency;
         this.status = STATUS.UP;
+        this.lastTrackedObjects = new ArrayList<>();
     }
 
     /**
-     * Processes detected objects from the camera and converts them into tracked objects.
+     * Processes a DetectObjectsEvent by retrieving cloud points and creating tracked objects.
      *
-     * @param detectedObjects The detected objects with a timestamp.
-     * @return A list of tracked objects.
+     * @param detectedObjects The list of detected objects from the camera.
+     * @param lidarDatabase   The LiDAR database containing cloud points.
+     * @return A list of tracked objects created from the detected objects.
      */
-    public List<TrackedObject> processDetectedObjects(StampedDetectedObjects detectedObjects) {
+    public List<TrackedObject> processDetectObjectsEvent(List<DetectedObject> detectedObjects, LiDarDataBase lidarDatabase) {
         List<TrackedObject> trackedObjects = new ArrayList<>();
 
-        // Simulate processing of each detected object
-        for (DetectedObject detectedObject : detectedObjects.getDetectedObjects()) {
-            TrackedObject trackedObject = new TrackedObject(
-                    detectedObject.getId(),
-                    detectedObjects.getTimestamp(),
-                    detectedObject.getDescription(),
-                    generateCoordinates()
-            );
-            trackedObjects.add(trackedObject);
+        for (DetectedObject detectedObject : detectedObjects) {
+            StampedCloudPoints cloudPoints = lidarDatabase.getCloudPoints(detectedObject.getId());
+
+            if (cloudPoints != null) {
+                TrackedObject trackedObject = new TrackedObject(
+                        detectedObject.getId(),
+                        cloudPoints.getTime(),
+                        detectedObject.getDescription(),
+                        cloudPoints.getCloudPoints()
+                );
+                trackedObjects.add(trackedObject);
+            }
         }
 
+        lastTrackedObjects = trackedObjects;
         return trackedObjects;
     }
 
     /**
-     * Updates the status of the LiDAR worker based on the current tick.
+     * Updates the status of the LiDAR tracker based on certain conditions.
      *
-     * @param tick The current tick.
+     * @param tick The current tick of the system.
      */
     public void updateStatus(long tick) {
-        // Example logic: If tick is a multiple of some value, simulate a status change
         if (tick % 100 == 0) {
-            this.status = (this.status == STATUS.UP) ? STATUS.ERROR : STATUS.UP;
+            status = (status == STATUS.UP) ? STATUS.ERROR : STATUS.UP;
         }
     }
 
     /**
-     * Generates dummy coordinates for a tracked object.
+     * Gets the last tracked objects by this worker.
      *
-     * @return A list of cloud points representing the coordinates.
+     * @return The list of last tracked objects.
      */
-    private List<CloudPoint> generateCoordinates() {
-        List<CloudPoint> coordinates = new ArrayList<>();
-        coordinates.add(new CloudPoint(1.0, 2.0));
-        coordinates.add(new CloudPoint(3.0, 4.0));
-        return coordinates;
+    public List<TrackedObject> getLastTrackedObjects() {
+        return lastTrackedObjects;
     }
 
     /**
-     * Gets the ID of the LiDAR worker.
+     * Gets the ID of the LiDAR tracker worker.
      *
-     * @return The ID of the LiDAR worker.
+     * @return The worker's ID.
      */
     public int getId() {
         return id;
     }
 
     /**
-     * Gets the processing frequency of the LiDAR worker.
+     * Gets the frequency of the LiDAR tracker worker.
      *
-     * @return The processing frequency.
+     * @return The worker's frequency.
      */
     public int getFrequency() {
         return frequency;
     }
 
     /**
-     * Gets the current status of the LiDAR worker.
+     * Gets the current status of the LiDAR tracker worker.
      *
-     * @return The current status.
+     * @return The worker's status.
      */
     public STATUS getStatus() {
         return status;
-    }
-
-    /**
-     * Sets the status of the LiDAR worker.
-     *
-     * @param status The new status.
-     */
-    public void setStatus(STATUS status) {
-        this.status = status;
     }
 }
