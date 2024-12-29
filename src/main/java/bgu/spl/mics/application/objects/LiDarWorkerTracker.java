@@ -8,9 +8,8 @@ import java.util.List;
  * Tracks objects and sends observations to the Fusion-SLAM service.
  */
 public class LiDarWorkerTracker {
-
     private final int id;
-    private final int frequency;
+    private final int frequency; // Time interval at which the LiDar sends new events
     private STATUS status;
     private List<TrackedObject> lastTrackedObjects;
 
@@ -43,7 +42,7 @@ public class LiDarWorkerTracker {
             if (cloudPoints != null) {
                 TrackedObject trackedObject = new TrackedObject(
                         detectedObject.getId(),
-                        cloudPoints.getTime(),
+                        cloudPoints.getTimestamp(),
                         detectedObject.getDescription(),
                         cloudPoints.getCloudPoints()
                 );

@@ -7,9 +7,8 @@ import java.util.List;
  * Includes the time of detection and a list of detected objects.
  */
 public class StampedDetectedObjects {
-
-    private final long timestamp;
-    private final List<DetectedObject> detectedObjects;
+    private final int timestamp; // The time the object was detected
+    private final List<DetectedObject> detectedObjects; // List of objects that were detected at 'timestamp'
 
     /**
      * Constructor for StampedDetectedObjects.
@@ -17,7 +16,7 @@ public class StampedDetectedObjects {
      * @param timestamp       The time the objects were detected.
      * @param detectedObjects The list of detected objects at the given time.
      */
-    public StampedDetectedObjects(long timestamp, List<DetectedObject> detectedObjects) {
+    public StampedDetectedObjects(int timestamp, List<DetectedObject> detectedObjects) {
         this.timestamp = timestamp;
         this.detectedObjects = detectedObjects;
     }
@@ -27,7 +26,7 @@ public class StampedDetectedObjects {
      *
      * @return The timestamp.
      */
-    public long getTimestamp() {
+    public int getTimestamp() {
         return timestamp;
     }
 

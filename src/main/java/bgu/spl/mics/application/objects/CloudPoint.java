@@ -4,7 +4,6 @@ package bgu.spl.mics.application.objects;
  * Represents a single point in 3D space as detected by the LiDAR.
  */
 public class CloudPoint {
-
     private final double x;
     private final double y;
 

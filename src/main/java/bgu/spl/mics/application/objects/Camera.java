@@ -11,7 +11,7 @@ public class Camera {
     private final int id;
     private final int frequency;
     private STATUS status;
-    private final List<StampedDetectedObjects> detectedObjectsList;
+    private final List<StampedDetectedObjects> detectedObjectsList; // Time-stamped detected objects
 
     /**
      * Constructor for Camera.
@@ -20,6 +20,7 @@ public class Camera {
      * @param frequency         The time interval (in ticks) at which the camera operates.
      * @param detectedObjectsList The list of stamped detected objects associated with this camera.
      */
+    // The arguments for initialization will be filled from the configuration file
     public Camera(int id, int frequency, List<StampedDetectedObjects> detectedObjectsList) {
         this.id = id;
         this.frequency = frequency;
@@ -33,19 +34,17 @@ public class Camera {
      * @param tick The current tick.
      * @return A StampedDetectedObjects instance if objects are detected at this tick; otherwise, an empty instance.
      */
-    public StampedDetectedObjects detectObjects(long tick) {
-        if (status != STATUS.UP) {
-            return new StampedDetectedObjects(tick, new ArrayList<>());
-        }
-
-        // Find the objects detected at the current tick
-        for (StampedDetectedObjects stampedDetectedObjects : detectedObjectsList) {
-            if (stampedDetectedObjects.getTimestamp() == tick) {
-                return stampedDetectedObjects;
+    public StampedDetectedObjects detectObjects(int tick) {
+        if (status == STATUS.UP) {
+            // Find the objects detected at the current tick
+            for (StampedDetectedObjects stampedDetectedObjects : detectedObjectsList) {
+                if (stampedDetectedObjects.getTimestamp() == tick) {
+                    return stampedDetectedObjects;
+                }
             }
         }
 
-        // If no objects are detected at the current tick, return an empty instance
+        // If status is not up or no objects are detected at the current tick, return an empty instance
         return new StampedDetectedObjects(tick, new ArrayList<>());
     }
 

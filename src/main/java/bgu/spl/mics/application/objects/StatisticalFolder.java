@@ -6,11 +6,10 @@ package bgu.spl.mics.application.objects;
  * the number of objects detected and tracked, and the number of landmarks identified.
  */
 public class StatisticalFolder {
-
-    private int systemRuntime;
-    private int numDetectedObjects;
-    private int numTrackedObjects;
-    private int numLandmarks;
+    private int systemRuntime; // Total runtime of the system, measured in ticks
+    private int numDetectedObjects; // Count of objects detected in all cameras
+    private int numTrackedObjects; // Count of objects tracked by all LiDAR workers
+    private int numLandmarks; // Count of all landmarks identified and mapped
 
     /**
      * Constructor for StatisticalFolder.
