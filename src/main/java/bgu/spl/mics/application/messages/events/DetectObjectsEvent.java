@@ -1,20 +1,25 @@
 package bgu.spl.mics.application.messages.events;
 import bgu.spl.mics.Event;
+import bgu.spl.mics.application.objects.StampedDetectedObjects;
 
 public class DetectObjectsEvent<T> implements Event<T> {
-    private final String sensorId;
-    private final long timestamp;
+    private final StampedDetectedObjects stampedDetectedObjects;
 
-    public DetectObjectsEvent(String sensorId, long timestamp) {
-        this.sensorId = sensorId;
-        this.timestamp = timestamp;
+    /**
+     * Constructor for DetectObjectsEvent.
+     *
+     * @param stampedDetectedObjects The stamped detected objects data for the event.
+     */
+    public DetectObjectsEvent(StampedDetectedObjects stampedDetectedObjects) {
+        this.stampedDetectedObjects = stampedDetectedObjects;
     }
 
-    public String getSensorId() {
-        return sensorId;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
+    /**
+     * Gets the stamped detected objects associated with this event.
+     *
+     * @return The StampedDetectedObjects instance.
+     */
+    public StampedDetectedObjects getStampedDetectedObjects() {
+        return stampedDetectedObjects;
     }
 }
