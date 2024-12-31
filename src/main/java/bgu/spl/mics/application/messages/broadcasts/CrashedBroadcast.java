@@ -22,6 +22,7 @@ public class CrashedBroadcast implements Broadcast {
         this.reason = reason;
     }
 
+
     /**
      * Gets the name of the crashed service.
      *

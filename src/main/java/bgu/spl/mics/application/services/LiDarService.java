@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.broadcasts.CrashedBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TickBroadcast;
 import bgu.spl.mics.application.messages.broadcasts.TerminatedBroadcast;
 import bgu.spl.mics.application.messages.events.DetectObjectsEvent;
@@ -19,18 +20,15 @@ import java.util.List;
 public class LiDarService extends MicroService {
 
     private final LiDarWorkerTracker lidarWorkerTracker;
-    private final StatisticalFolder stats;
 
     /**
      * Constructor for LiDarService.
      *
      * @param lidarWorkerTracker A LiDAR worker tracker for processing data.
-     * @param stats              The StatisticalFolder for updating statistics.
      */
-    public LiDarService(LiDarWorkerTracker lidarWorkerTracker, StatisticalFolder stats) {
+    public LiDarService(LiDarWorkerTracker lidarWorkerTracker) {
         super("LiDarService-" + lidarWorkerTracker.getId());
         this.lidarWorkerTracker = lidarWorkerTracker;
-        this.stats = stats;
     }
 
     /**
@@ -44,21 +42,21 @@ public class LiDarService extends MicroService {
             lidarWorkerTracker.updateStatus(tick.getTick());
         });
 
-        // Subscribes to DetectObjectsEvent to process detected objects from cameras.
-        subscribeEvent(DetectObjectsEvent.class, event -> {
-            StampedDetectedObjects detectedObjects = event.getStampedDetectedObjects();
-            List<TrackedObject> trackedObjects = lidarWorkerTracker.processDetectedObjects(
-                    detectedObjects.getDetectedObjects(), detectedObjects.getTimestamp());
 
-            if (!trackedObjects.isEmpty()) {
-                sendEvent(new TrackedObjectsEvent(trackedObjects));
-                stats.incrementTrackedObjects(trackedObjects.size());
-            }
+        subscribeEvent(DetectObjectsEvent.class, detectedEvent ->{
+            //TO DO - When we should send the coordinates
+            int lidarTime = lidarWorkerTracker.getFrequency();
+            int currTick =
+
+            sendEvent(new TrackedObjectsEvent(null));
         });
 
-        // Subscribes to TerminatedBroadcast for graceful shutdown.
-        subscribeBroadcast(TerminatedBroadcast.class, terminated -> terminate());
+        subscribeBroadcast(TerminatedBroadcast.class, terminated ->{
+            Thread.currentThread().interrupt();
+                });
 
-        System.out.println(getName() + " initialized.");
+        subscribeBroadcast(CrashedBroadcast.class, crashed ->{
+            Thread.currentThread().interrupt();
+        });
     }
 }

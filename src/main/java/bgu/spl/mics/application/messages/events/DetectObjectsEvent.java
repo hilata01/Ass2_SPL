@@ -1,8 +1,10 @@
 package bgu.spl.mics.application.messages.events;
 import bgu.spl.mics.Event;
 import bgu.spl.mics.application.objects.StampedDetectedObjects;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
-public class DetectObjectsEvent<T> implements Event<T> {
+public class DetectObjectsEvent implements Event<Boolean> {
+    private final int id;
     private final StampedDetectedObjects stampedDetectedObjects;
 
     /**
@@ -10,8 +12,9 @@ public class DetectObjectsEvent<T> implements Event<T> {
      *
      * @param stampedDetectedObjects The stamped detected objects data for the event.
      */
-    public DetectObjectsEvent(StampedDetectedObjects stampedDetectedObjects) {
+    public DetectObjectsEvent(StampedDetectedObjects stampedDetectedObjects, int id) {
         this.stampedDetectedObjects = stampedDetectedObjects;
+        this.id = id;
     }
 
     /**
@@ -22,4 +25,6 @@ public class DetectObjectsEvent<T> implements Event<T> {
     public StampedDetectedObjects getStampedDetectedObjects() {
         return stampedDetectedObjects;
     }
+
+    public int getDetectObjectsEventID(){ return id;}
 }

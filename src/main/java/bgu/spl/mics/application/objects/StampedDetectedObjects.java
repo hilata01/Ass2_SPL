@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.objects;
 
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Represents objects detected by the camera at a specific timestamp.
@@ -8,7 +9,7 @@ import java.util.List;
  */
 public class StampedDetectedObjects {
     private final int timestamp; // The time the object was detected
-    private final List<DetectedObject> detectedObjects; // List of objects that were detected at 'timestamp'
+    private  List<DetectedObject> detectedObjects; // List of objects that were detected at 'timestamp'
 
     /**
      * Constructor for StampedDetectedObjects.

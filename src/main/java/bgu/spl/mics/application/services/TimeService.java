@@ -44,7 +44,8 @@ public class TimeService extends MicroService {
         });
         thread.start();
 
-        // Subscribe to TerminatedBroadcast to terminate gracefully
+
+        //no subscribeBroadcast needed
         subscribeBroadcast(TerminatedBroadcast.class, broadcast -> terminate());
     }
 }

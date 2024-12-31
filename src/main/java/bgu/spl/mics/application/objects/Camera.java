@@ -2,6 +2,7 @@ package bgu.spl.mics.application.objects;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Represents a camera sensor on the robot.
@@ -28,24 +29,9 @@ public class Camera {
         this.detectedObjectsList = detectedObjectsList;
     }
 
-    /**
-     * Detects objects at the specified tick.
-     *
-     * @param tick The current tick.
-     * @return A StampedDetectedObjects instance if objects are detected at this tick; otherwise, an empty instance.
-     */
-    public StampedDetectedObjects detectObjects(int tick) {
-        if (status == STATUS.UP) {
-            // Find the objects detected at the current tick
-            for (StampedDetectedObjects stampedDetectedObjects : detectedObjectsList) {
-                if (stampedDetectedObjects.getTimestamp() == tick) {
-                    return stampedDetectedObjects;
-                }
-            }
-        }
 
-        // If status is not up or no objects are detected at the current tick, return an empty instance
-        return new StampedDetectedObjects(tick, new ArrayList<>());
+    public List<StampedDetectedObjects> getDetectedObjectsList(){
+        return detectedObjectsList;
     }
 
     /**
